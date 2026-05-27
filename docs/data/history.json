@@ -3,31 +3,31 @@
   "phase_timeline": [
     {
       "date": "2026-05-27",
-      "phase_id": 2,
-      "phase_code": "RECALENTAMIENTO",
+      "phase_id": 1,
+      "phase_code": "EXPANSION",
       "probabilities": {
-        "1": 0.14458428118769182,
-        "2": 0.49587307152001947,
-        "3": 0.2595062216426689,
-        "4": 0.10003642564961986
+        "1": 0.29400933817495234,
+        "2": 0.25053421645317914,
+        "3": 0.21117764509761155,
+        "4": 0.2442788002742571
       },
-      "growth": 0.15753372577136104,
-      "stress": 0.36065773085846065
+      "growth": 0.05668727772803006,
+      "stress": -0.04861062529708733
     }
   ],
   "leader_timeline": [
     {
       "date": "2026-05-27",
-      "leader": "XLE",
-      "leader_score": 74.53,
-      "runner_up": "XLK"
+      "leader": "XLK",
+      "leader_score": 95.08,
+      "runner_up": "XLE"
     }
   ],
   "sentiment_timeline": [
     {
       "date": "2026-05-27",
-      "sentiment": -0.367,
-      "label": "Risk-Off",
+      "sentiment": 0.291,
+      "label": "Risk-On",
       "divergence": null
     }
   ],
