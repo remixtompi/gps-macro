@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPS MACRO — Panel Top-Down</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">GPS</span>
+    <span class="logo-sub">MACRO</span>
+  </div>
+  <div class="meta">
+    <div>Actualizado: <strong>{{ updated_at }}</strong></div>
+    <div>Proxima ejecucion: <span class="muted">{{ next_run }}</span></div>
+  </div>
+</header>
+
+{% if alerts.phase_change %}
+<div class="alert-banner alert-red">
+  <strong>CAMBIO DE FASE DETECTADO:</strong>
+  {{ alerts.phase_change.from }} → {{ alerts.phase_change.to }}
+  <span class="muted">(prev: {{ alerts.phase_change.previous_date }})</span>
+</div>
+{% endif %}
+{% if alerts.divergence %}
+<div class="alert-banner alert-yellow">
+  <strong>DIVERGENCIA macro / mercado:</strong>
+  {% if alerts.divergence == "market_better" %}
+    El mercado esta mas optimista que la macro. Cuidado con techos.
+  {% else %}
+    La macro esta mas fuerte que el mercado. Posibles oportunidades.
+  {% endif %}
+</div>
+{% endif %}
+{% if alerts.leader_change %}
+<div class="alert-banner alert-blue">
+  <strong>NUEVO LIDER SECTORIAL:</strong>
+  {{ alerts.leader_change.from }} → {{ alerts.leader_change.to }}
+</div>
+{% endif %}
+
+<main>
+
+<!-- 1. FASE DEL CICLO -->
+<section class="card card-phase" style="--phase-color: {{ macro.phase.color }};">
+  <div class="phase-main">
+    <div class="phase-label">Fase del ciclo</div>
+    <div class="phase-name">{{ macro.phase.label }}</div>
+    <div class="phase-desc">{{ macro.phase.description }}</div>
+    <div class="phase-axes">
+      <div><span class="muted">Crecimiento:</span>
+        <span class="{{ 'pos' if macro.axes.growth >= 0 else 'neg' }}">{{ '%+0.2f'|format(macro.axes.growth) }}</span>
+      </div>
+      <div><span class="muted">Stress / Inflacion:</span>
+        <span class="{{ 'pos' if macro.axes.stress < 0 else 'neg' }}">{{ '%+0.2f'|format(macro.axes.stress) }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="phase-probs">
+    <div class="probs-title">Probabilidades</div>
+    {% for pid, plabel in phase_labels %}
+    <div class="prob-row">
+      <span class="prob-label">{{ plabel }}</span>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar" style="width: {{ (macro.phase.probabilities[pid] * 100)|round(0) }}%; background: {{ phase_colors[pid] }};"></div>
+      </div>
+      <span class="prob-val">{{ (macro.phase.probabilities[pid] * 100)|round(0)|int }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- 2. INDICADORES MACRO -->
+<section class="card">
+  <h2>Indicadores Macroeconomicos</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Indicador</th>
+        <th>Valor</th>
+        <th>Z-score</th>
+        <th>Momentum</th>
+        <th>Score</th>
+        <th>Tendencia</th>
+        <th>Sparkline</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for ind in macro.indicators %}
+      <tr>
+        <td class="ind-desc">{{ ind.description }} <span class="muted">({{ ind.axis }})</span></td>
+        <td class="num">{{ '%0.3f'|format(ind.value) }}</td>
+        <td class="num {{ 'pos' if ind.z_score > 0 else 'neg' if ind.z_score < 0 else '' }}">{{ '%+0.2f'|format(ind.z_score) }}</td>
+        <td class="num {{ 'pos' if ind.momentum > 0 else 'neg' if ind.momentum < 0 else '' }}">{{ '%+0.1f'|format(ind.momentum * 100) }}%</td>
+        <td><div class="score-pill" style="background: {{ score_color(ind.score) }};">{{ '%+0.2f'|format(ind.score) }}</div></td>
+        <td class="arrow {{ ind.trend }}">{{ '↑' if ind.trend == 'up' else '↓' if ind.trend == 'down' else '→' }}</td>
+        <td><canvas class="sparkline" data-points='{{ ind.sparkline|tojson }}' width="120" height="32"></canvas></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- 3. HEATMAP SECTORIAL -->
+<section class="card">
+  <h2>Heatmap Sectorial (Score Compuesto 0-100)</h2>
+  <div class="heatmap">
+    {% for sec in sectors %}
+    <div class="heat-cell" style="background: {{ score_color_100(sec.score) }};" title="{{ sec.name }} - Score {{ sec.score|round(1) }}">
+      <div class="heat-ticker">{{ sec.ticker }}</div>
+      <div class="heat-name">{{ sec.short }}</div>
+      <div class="heat-score">{{ sec.score|round(0)|int }}</div>
+      <div class="heat-1d {{ 'pos' if sec.pct_1d >= 0 else 'neg' }}">{{ '%+0.2f'|format(sec.pct_1d) }}%</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- 4. TABLA SECTORIAL DETALLADA -->
+<section class="card">
+  <h2>Ranking Sectorial Detallado</h2>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Ticker</th>
+        <th>Sector</th>
+        <th>Score</th>
+        <th>RS Mansfield</th>
+        <th>Mom 1M</th>
+        <th>Mom 3M</th>
+        <th>Mom 6M</th>
+        <th>Breadth</th>
+        <th>Volume</th>
+        <th>Fase</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for sec in sectors %}
+      <tr class="{{ 'top3' if loop.index <= 3 }}">
+        <td>{{ sec.rank }}</td>
+        <td class="ticker-cell">{{ sec.ticker }}</td>
+        <td>{{ sec.name }}</td>
+        <td><div class="score-pill" style="background: {{ score_color_100(sec.score) }};">{{ sec.score|round(1) }}</div></td>
+        <td class="num {{ 'pos' if sec.rs_mansfield >= 0 else 'neg' }}">{{ '%+0.2f'|format(sec.rs_mansfield) }}</td>
+        <td class="num {{ 'pos' if sec.momentum.m1 >= 0 else 'neg' }}">{{ '%+0.1f'|format(sec.momentum.m1 * 100) }}%</td>
+        <td class="num {{ 'pos' if sec.momentum.m3 >= 0 else 'neg' }}">{{ '%+0.1f'|format(sec.momentum.m3 * 100) }}%</td>
+        <td class="num {{ 'pos' if sec.momentum.m6 >= 0 else 'neg' }}">{{ '%+0.1f'|format(sec.momentum.m6 * 100) }}%</td>
+        <td class="num {{ 'pos' if sec.breadth >= 0 else 'neg' }}">{{ '%+0.2f'|format(sec.breadth) }}</td>
+        <td class="num {{ 'pos' if sec.volume_flow >= 0 else 'neg' }}">{{ '%+0.2f'|format(sec.volume_flow) }}</td>
+        <td class="num {{ 'pos' if sec.phase_alignment > 0 else 'neg' if sec.phase_alignment < 0 else 'muted' }}">{{ '%+0.0f'|format(sec.phase_alignment) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- 5. RECOMENDACION DE FASE -->
+<section class="card card-recommend">
+  <h2>Posicionamiento sugerido para fase "{{ macro.phase.label }}"</h2>
+  <div class="recommend-grid">
+    <div class="recommend-block recommend-fav">
+      <div class="recommend-title">✅ Sectores favorecidos</div>
+      <div class="recommend-list">
+        {% for s in macro.phase.favored_sectors %}<span class="tag tag-fav">{{ s }}</span>{% endfor %}
+      </div>
+    </div>
+    <div class="recommend-block recommend-avoid">
+      <div class="recommend-title">⚠ Sectores a evitar</div>
+      <div class="recommend-list">
+        {% for s in macro.phase.avoid_sectors %}<span class="tag tag-avoid">{{ s }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="recommend-note">
+    <strong>Top 3 actual (por score compuesto):</strong>
+    {% for sec in sectors[:3] %}
+      <span class="tag tag-top">#{{ loop.index }} {{ sec.ticker }} ({{ sec.score|round(0)|int }})</span>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- 6. SUB-SECTORES (si aplica) -->
+{% if subsectors %}
+<section class="card">
+  <h2>Sub-sectores del lider ({{ sectors[0].ticker }} — {{ sectors[0].name }})</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Ticker</th><th>Nombre</th><th>Score</th><th>RS Mansfield</th><th>Mom 1M</th><th>Mom 3M</th><th>Precio</th></tr>
+    </thead>
+    <tbody>
+    {% for sub in subsectors %}
+      <tr>
+        <td class="ticker-cell">{{ sub.ticker }}</td>
+        <td>{{ sub.name }}</td>
+        <td><div class="score-pill" style="background: {{ score_color_100(sub.score) }};">{{ sub.score|round(1) }}</div></td>
+        <td class="num {{ 'pos' if sub.rs >= 0 else 'neg' }}">{{ '%+0.2f'|format(sub.rs) }}</td>
+        <td class="num {{ 'pos' if sub.momentum_1m >= 0 else 'neg' }}">{{ '%+0.1f'|format(sub.momentum_1m * 100) }}%</td>
+        <td class="num {{ 'pos' if sub.momentum_3m >= 0 else 'neg' }}">{{ '%+0.1f'|format(sub.momentum_3m * 100) }}%</td>
+        <td class="num">${{ sub.last_price }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<!-- 7. DIVERGENCIA / SENTIMIENTO -->
+{% if sentiment %}
+<section class="card">
+  <h2>Macro vs Mercado</h2>
+  <div class="divergence-rows">
+    <div class="div-row">
+      <div class="div-label">Macro (crecimiento - stress)</div>
+      <div class="div-bar-wrap">
+        <div class="div-bar-zero"></div>
+        <div class="div-bar {{ 'pos' if sentiment.macro_summary >= 0 else 'neg' }}" style="--val: {{ (sentiment.macro_summary * 50)|round(1) }}%;"></div>
+      </div>
+      <div class="div-val">{{ '%+0.2f'|format(sentiment.macro_summary) }}</div>
+    </div>
+    <div class="div-row">
+      <div class="div-label">Mercado (sentimiento)</div>
+      <div class="div-bar-wrap">
+        <div class="div-bar-zero"></div>
+        <div class="div-bar {{ 'pos' if sentiment.sentiment >= 0 else 'neg' }}" style="--val: {{ (sentiment.sentiment * 50)|round(1) }}%;"></div>
+      </div>
+      <div class="div-val">{{ '%+0.2f'|format(sentiment.sentiment) }} ({{ sentiment.label }})</div>
+    </div>
+  </div>
+  <div class="muted small">
+    Componentes mercado:
+    Trend SPY {{ '%+0.2f'|format(sentiment.components.trend_spy) }},
+    VIX {{ '%+0.2f'|format(sentiment.components.vix_inv) }},
+    HY-OAS {{ '%+0.2f'|format(sentiment.components.hy_oas_inv) }},
+    Breadth {{ '%+0.2f'|format(sentiment.components.sector_breadth) }},
+    Risk-Appetite {{ '%+0.2f'|format(sentiment.components.risk_appetite) }}.
+  </div>
+</section>
+{% endif %}
+
+<!-- 8. HISTORICO -->
+<section class="card">
+  <h2>Historico de fase del ciclo</h2>
+  <canvas id="phase-history-chart" height="220"></canvas>
+</section>
+
+<section class="card">
+  <h2>Historico crecimiento vs stress</h2>
+  <canvas id="axes-history-chart" height="220"></canvas>
+</section>
+
+<section class="card">
+  <h2>Eventos recientes</h2>
+  <ul class="events-list">
+    {% for ev in events|reverse %}
+      <li><span class="muted">{{ ev.date }}</span> <strong>{{ ev.type }}</strong>: {{ ev.message }}</li>
+    {% else %}
+      <li class="muted">Sin eventos registrados aun.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div>GPS_MACRO · Sistema Top-Down (Macro → Sector → Precio)</div>
+  <div class="muted small">Datos: FRED + Yahoo Finance · Determinista · Sin recomendacion personalizada</div>
+</footer>
+
+<script>
+window.__SNAPSHOT__ = {{ snapshot_json|safe }};
+window.__HISTORY__ = {{ history_json|safe }};
+</script>
+<script src="assets/app.js" defer></script>
+
+</body>
+</html>

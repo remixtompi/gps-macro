@@ -1,0 +1,52 @@
+name: Daily Macro Update
+
+on:
+  schedule:
+    # Lunes a Viernes 12:30 UTC (~07:30-08:30 ET segun DST). Pre-apertura US.
+    - cron: '30 12 * * 1-5'
+    # Sabado 12:00 UTC: reporte semanal con datos del cierre del viernes.
+    - cron: '0 12 * * 6'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gps-macro-daily
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python -m src.main
+
+      - name: Commit & push dashboard
+        run: |
+          git config user.name "gps-macro-bot"
+          git config user.email "gps-macro-bot@users.noreply.github.com"
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "Sin cambios para commitear."
+          else
+            git commit -m "chore: daily update $(date -u +%Y-%m-%d)"
+            git push
+          fi

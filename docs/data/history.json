@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "phase_timeline": [
+    {
+      "date": "2026-05-27",
+      "phase_id": 2,
+      "phase_code": "RECALENTAMIENTO",
+      "probabilities": {
+        "1": 0.14458428118769182,
+        "2": 0.49587307152001947,
+        "3": 0.2595062216426689,
+        "4": 0.10003642564961986
+      },
+      "growth": 0.15753372577136104,
+      "stress": 0.36065773085846065
+    }
+  ],
+  "leader_timeline": [
+    {
+      "date": "2026-05-27",
+      "leader": "XLE",
+      "leader_score": 74.53,
+      "runner_up": "XLK"
+    }
+  ],
+  "sentiment_timeline": [
+    {
+      "date": "2026-05-27",
+      "sentiment": -0.367,
+      "label": "Risk-Off",
+      "divergence": null
+    }
+  ],
+  "events": [
+    {
+      "date": "2026-05-27",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (macro_better)"
+    }
+  ],
+  "_alerts": {
+    "phase_change": null,
+    "leader_change": null,
+    "divergence": null
+  }
+}

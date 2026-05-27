@@ -1,0 +1,189 @@
+# GPS MACRO — Sistema Top-Down (Macro → Sector → Precio)
+
+Sistema cuantitativo automatizado que identifica:
+1. **Fase del ciclo economico** (4 fases: Expansion / Recalentamiento / Contraccion / Desaceleracion).
+2. **Sectores lideres y rezagados** (los 11 GICS via ETFs sectoriales).
+3. **Divergencias macro vs mercado** (para evitar trampas).
+
+Genera un **dashboard web estatico** que se publica automaticamente en GitHub Pages, actualizado cada dia habil pre-apertura del mercado US.
+
+> **Filosofia:** el sistema responde a *donde* debe estar tu dinero (sector / sub-sector). El *cuando entrar* y los stops siguen siendo tuyos (tu analisis tecnico geometrico).
+
+---
+
+## Indicadores del modelo
+
+### Macro principales (votan en la fase del ciclo)
+| Indicador | Fuente | Eje |
+|---|---|---|
+| Empleo Manufactura (proxy PMI) | FRED `MANEMP` | Crecimiento |
+| Curva de Rendimientos 10Y-2Y | FRED `T10Y2Y` | Crecimiento |
+| Jobless Claims 4-Week MA | FRED `IC4WSA` | Crecimiento |
+| High Yield OAS Spread | FRED `BAMLH0A0HYM2` | Stress |
+| Chicago Fed NFCI | FRED `NFCI` | Stress |
+| State Coincident LEI proxy | FRED `USSLIND` | Crecimiento |
+| Breakeven Inflation 5Y | FRED `T5YIE` | Stress |
+| Copper/Gold Ratio | Yahoo `HG=F`/`GC=F` | Crecimiento |
+| VIX | Yahoo `^VIX` | Stress |
+
+### Secundarios (informativos)
+M2 Money Supply, Real Yield 10Y, Retail Sales, Building Permits, DXY.
+
+### Score sectorial compuesto (0-100) — 11 ETFs GICS
+Combina: **Mansfield RS (25%)**, **Momentum 1M/3M/6M (30%)**, **Cross-sectional rank (15%)**, **Breadth (10%)**, **Volume Flow / OBV (10%)**, **Alineacion con fase macro (10%)**.
+
+---
+
+## Estructura del proyecto
+
+```
+GPS_MACRO/
+├── .github/workflows/daily-update.yml   # Cron + push automatico (GitHub Actions)
+├── src/
+│   ├── config.py             # Tickers, umbrales, pesos (puedes calibrar)
+│   ├── data_fetcher.py       # FRED + Yahoo con cache y fallback Stooq
+│   ├── macro_model.py        # Calculo de fase del ciclo
+│   ├── sector_rotation.py    # Score compuesto sectorial
+│   ├── divergence.py         # Sentimiento mercado + deteccion divergencias
+│   ├── history_manager.py    # Persistencia incremental + deteccion de cambios
+│   ├── dashboard_builder.py  # Render Jinja2 -> HTML
+│   ├── synthetic_data.py     # Datos sinteticos para tests sin internet
+│   └── main.py               # Pipeline completo
+├── docs/                     # Lo que sirve GitHub Pages
+│   ├── index.html            # Dashboard generado
+│   ├── data/
+│   │   ├── snapshot.json     # Estado actual
+│   │   └── history.json      # Series para graficos historicos
+│   ├── assets/{style.css, app.js}
+│   └── templates/dashboard.html.j2
+├── tests/test_macro_model.py
+├── requirements.txt
+└── .gitignore
+```
+
+---
+
+## CHECKLIST DEL USUARIO (lo que hace el humano)
+
+Solo **3 pasos manuales**. Todo el resto lo hace Claude / el sistema.
+
+### Paso 1 — Obtener FRED API key (5 min, gratis)
+1. Ir a https://fred.stlouisfed.org/docs/api/api_key.html
+2. Pulsar "Request or View Your API Key" → registrarse con email.
+3. Confirmar email → copiar la key (32 caracteres).
+
+### Paso 2 — Crear el repositorio en GitHub
+1. Ir a https://github.com/new
+2. Nombre: `gps-macro` · Visibilidad: **Public** (necesario para GitHub Pages gratis) o Private (solo si tienes plan Pro/Team).
+3. NO marcar "Add a README".
+4. Crear el repo.
+
+Desde la terminal en `GPS_MACRO/`:
+```bash
+git init
+git add .
+git commit -m "feat: initial GPS_MACRO system"
+git branch -M main
+git remote add origin https://github.com/<TU_USUARIO>/gps-macro.git
+git push -u origin main
+```
+
+### Paso 3 — Configurar el secret + activar GitHub Pages
+1. En el repo en GitHub → **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `FRED_API_KEY`
+   - Value: la key del Paso 1.
+2. En el mismo repo → **Settings → Pages**
+   - Source: `Deploy from a branch`
+   - Branch: `main` · Folder: `/docs`
+   - Guardar.
+3. En **Actions** dispara el workflow `Daily Macro Update` manualmente (boton "Run workflow") la primera vez.
+4. Espera 2 minutos. Tu dashboard estara en:
+   ```
+   https://<TU_USUARIO>.github.io/gps-macro/
+   ```
+
+¡Listo! A partir de ahi el sistema corre solo cada dia habil a las 12:30 UTC (~07:30/08:30 ET, pre-apertura).
+
+---
+
+## Uso local (opcional — para inspeccionar)
+
+```powershell
+cd "c:\Users\rover\OneDrive\Escritorio\TRADING\GPS_MACRO"
+python -m pip install -r requirements.txt
+
+# Probar sin FRED API key (datos sinteticos):
+python -m src.main --synthetic
+
+# Probar con datos reales (define la variable):
+$env:FRED_API_KEY = "tu_api_key_aqui"
+python -m src.main
+
+# Abrir el dashboard:
+start docs\index.html
+```
+
+Ejecutar tests:
+```powershell
+pytest tests/
+```
+
+---
+
+## Como leer el dashboard
+
+**Banner superior (rojo/amarillo/azul):** alerta cuando hay cambio de fase, divergencia macro/mercado o cambio de lider sectorial.
+
+**Gauge de fase:** dice donde estamos en el ciclo + probabilidades a las 4 fases. Cambio de fase se declara solo si >55% sostenido 5 dias (config en `src/config.py`).
+
+**Tabla macro:** valor actual, z-score (vs 10 anos), momentum 90d, score compuesto y sparkline.
+
+**Heatmap sectorial:** los 11 GICS con su score 0-100 ordenados visualmente.
+
+**Ranking detallado:** top-3 resaltado. Mira los componentes del score para entender por que el sector lidera.
+
+**Posicionamiento por fase:** sectores favorecidos/a evitar segun el modelo + el top-3 actual.
+
+**Sub-sectores del lider:** aparece solo si el sector top tiene score >= 70.
+
+**Divergencia macro vs mercado:** dos barras. Si estan muy desalineadas, banner amarillo.
+
+**Historico:** graficos de la evolucion de fase, crecimiento, stress y sentimiento.
+
+---
+
+## Como recalibrar (cuando ganes experiencia)
+
+Editar `src/config.py`:
+- **`SECTOR_SCORE_WEIGHTS`** — pesos de cada componente del score sectorial.
+- **`MOMENTUM_WEIGHTS`** — pesos relativos de momentum 1M/3M/6M.
+- **`PHASE_CHANGE_THRESHOLD`** y **`PHASE_CHANGE_PERSISTENCE_DAYS`** — sensibilidad para declarar cambio de fase.
+- **`SUBSECTOR_TRIGGER_SCORE`** — umbral para mostrar sub-sectores del lider.
+- **`PHASES[N]["favored_sectors"]`** — sectores favorecidos por fase (basado en Sam Stovall).
+
+Cualquier cambio se aplica en la siguiente ejecucion programada.
+
+---
+
+## Troubleshooting
+
+**El workflow falla con `FREDError: FRED_API_KEY no esta configurada`**
+→ Faltan los secrets. Repite Paso 3 del checklist.
+
+**Yahoo Finance devuelve vacio para algun ETF**
+→ El fetcher cae automaticamente a Stooq. Si persiste, revisar logs en Actions.
+
+**El dashboard no se actualiza en GitHub Pages**
+→ Ver pestana **Actions** del repo. Si hay un workflow rojo, click → ver logs → fix.
+
+**Pytest falla**
+→ Los tests usan datos sinteticos, no requieren API key. Si fallan reportar el output completo.
+
+---
+
+## Diseno deliberado
+
+- **Determinista**: mismo input -> mismo output, sin LLMs en el pipeline, auditable.
+- **Sin base de datos**: el historico vive como JSON en Git -> versionado y reversible.
+- **Cero costo**: GitHub Actions + Pages + FRED API + Yahoo Finance, todo gratis.
+- **El usuario mantiene su edge**: el sistema dice *que mirar*, no *cuando comprar*.

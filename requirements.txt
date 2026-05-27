@@ -1,0 +1,10 @@
+fredapi==0.5.2
+yfinance==0.2.51
+pandas==2.2.3
+numpy==2.1.3
+scipy==1.14.1
+pandas-datareader==0.10.0
+Jinja2==3.1.4
+requests==2.32.3
+python-dateutil==2.9.0.post0
+pytest==8.3.4
