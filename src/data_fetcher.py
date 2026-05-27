@@ -120,60 +120,46 @@ class YahooError(Exception):
     pass
 
 
+def _yf_ticker_history(ticker: str, start: str, end: str, field: str = "Close") -> pd.Series:
+    """Usa yf.Ticker().history() — mas estable en servidores que yf.download()."""
+    import yfinance as yf
+    t = yf.Ticker(ticker)
+    df = t.history(start=start, end=end, auto_adjust=True, actions=False)
+    if df is None or df.empty:
+        raise YahooError(f"Yahoo devolvio vacio para {ticker}")
+    if field not in df.columns:
+        raise YahooError(f"Campo '{field}' no encontrado en {ticker}. Cols: {list(df.columns)}")
+    s = df[field].dropna()
+    s.name = ticker
+    s.index = pd.to_datetime(s.index).tz_localize(None)
+    return s
+
+
 def fetch_yahoo_close(ticker: str, years: int = 6) -> pd.Series:
-    """Descarga cierres ajustados de Yahoo Finance. Con cache + fallback a Stooq."""
+    """Descarga cierres ajustados de Yahoo Finance con cache y reintentos."""
     cached = _cache_get(f"yh_{ticker}")
     if cached is not None:
         return cached
 
     try:
-        import yfinance as yf
+        import yfinance as yf  # noqa: F401
     except ImportError as e:
         raise YahooError(f"yfinance no instalado: {e}")
 
     end = _utcnow().date()
     start = end - timedelta(days=int(365 * years))
-
     last_err: Optional[Exception] = None
+
     for attempt in range(3):
         try:
-            df = yf.download(
-                ticker,
-                start=start.isoformat(),
-                end=end.isoformat(),
-                progress=False,
-                auto_adjust=True,
-                threads=False,
-            )
-            if df is None or df.empty:
-                raise YahooError(f"Yahoo devolvio vacio para {ticker}")
-            # Manejar MultiIndex que yfinance a veces devuelve
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-            col = "Close" if "Close" in df.columns else df.columns[0]
-            s = df[col].dropna()
-            s.name = ticker
-            s.index = pd.to_datetime(s.index).tz_localize(None)
+            s = _yf_ticker_history(ticker, start.isoformat(), end.isoformat(), "Close")
             _cache_set(f"yh_{ticker}", s)
             return s
         except Exception as e:
             last_err = e
             time.sleep(1 + attempt)
 
-    # Fallback a Stooq via pandas-datareader
-    try:
-        from pandas_datareader import data as pdr
-        df = pdr.DataReader(ticker, "stooq", start, end)
-        if df is not None and not df.empty:
-            s = df["Close"].dropna().sort_index()
-            s.name = ticker
-            s.index = pd.to_datetime(s.index).tz_localize(None)
-            _cache_set(f"yh_{ticker}", s)
-            return s
-    except Exception as e:
-        last_err = e
-
-    raise YahooError(f"Yahoo+Stooq fallaron para {ticker}: {last_err}")
+    raise YahooError(f"Yahoo fallo para {ticker}: {last_err}")
 
 
 def fetch_yahoo_volume(ticker: str, years: int = 4) -> pd.Series:
@@ -182,26 +168,20 @@ def fetch_yahoo_volume(ticker: str, years: int = 4) -> pd.Series:
     if cached is not None:
         return cached
 
-    import yfinance as yf
     end = _utcnow().date()
     start = end - timedelta(days=int(365 * years))
-    df = yf.download(
-        ticker,
-        start=start.isoformat(),
-        end=end.isoformat(),
-        progress=False,
-        auto_adjust=False,
-        threads=False,
-    )
-    if df is None or df.empty:
-        raise YahooError(f"Yahoo volume vacio para {ticker}")
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
-    s = df["Volume"].dropna()
-    s.name = ticker
-    s.index = pd.to_datetime(s.index).tz_localize(None)
-    _cache_set(f"yhv_{ticker}", s)
-    return s
+    last_err: Optional[Exception] = None
+
+    for attempt in range(3):
+        try:
+            s = _yf_ticker_history(ticker, start.isoformat(), end.isoformat(), "Volume")
+            _cache_set(f"yhv_{ticker}", s)
+            return s
+        except Exception as e:
+            last_err = e
+            time.sleep(1 + attempt)
+
+    raise YahooError(f"Yahoo volumen fallo para {ticker}: {last_err}")
 
 
 # ============== ORQUESTADOR DE ALTO NIVEL ==============
