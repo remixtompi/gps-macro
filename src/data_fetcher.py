@@ -92,7 +92,8 @@ def get_fred_client():
 
 def fetch_fred_series(series_id: str, years: int = 12) -> pd.Series:
     """Descarga una serie de FRED con cache. Devuelve pd.Series indexado por fecha."""
-    cached = _cache_get(f"fred_{series_id}")
+    cache_key = f"fred_{series_id}_{years}y"
+    cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
@@ -137,7 +138,8 @@ def _yf_ticker_history(ticker: str, start: str, end: str, field: str = "Close") 
 
 def fetch_yahoo_close(ticker: str, years: int = 6) -> pd.Series:
     """Descarga cierres ajustados de Yahoo Finance con cache y reintentos."""
-    cached = _cache_get(f"yh_{ticker}")
+    cache_key = f"yh_{ticker}_{years}y"
+    cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
@@ -153,7 +155,7 @@ def fetch_yahoo_close(ticker: str, years: int = 6) -> pd.Series:
     for attempt in range(3):
         try:
             s = _yf_ticker_history(ticker, start.isoformat(), end.isoformat(), "Close")
-            _cache_set(f"yh_{ticker}", s)
+            _cache_set(cache_key, s)
             return s
         except Exception as e:
             last_err = e
@@ -164,7 +166,8 @@ def fetch_yahoo_close(ticker: str, years: int = 6) -> pd.Series:
 
 def fetch_yahoo_volume(ticker: str, years: int = 4) -> pd.Series:
     """Descarga volumen para calculos de OBV."""
-    cached = _cache_get(f"yhv_{ticker}")
+    cache_key = f"yhv_{ticker}_{years}y"
+    cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
@@ -175,7 +178,7 @@ def fetch_yahoo_volume(ticker: str, years: int = 4) -> pd.Series:
     for attempt in range(3):
         try:
             s = _yf_ticker_history(ticker, start.isoformat(), end.isoformat(), "Volume")
-            _cache_set(f"yhv_{ticker}", s)
+            _cache_set(cache_key, s)
             return s
         except Exception as e:
             last_err = e

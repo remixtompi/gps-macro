@@ -130,6 +130,45 @@ pytest tests/
 
 ---
 
+## Backtest / Validacion historica
+
+El modulo `src/backtest.py` responde la pregunta clave: **¿las senales de GPS_MACRO
+habrian aportado valor frente a comprar el indice (SPY)?** Reconstruye, mes a mes hacia
+atras y **sin mirar el futuro** (point-in-time: cada fecha solo usa datos hasta ese dia),
+la fase del ciclo y el ranking sectorial, y simula tres estrategias:
+
+| Estrategia | Que hace |
+|---|---|
+| **TOPN** | Equipondera los N sectores con mayor score compuesto (el motor completo). |
+| **PHASE** | Compra los sectores `favored` de la fase vigente (teoria pura de Stovall). |
+| **SPY** | Comprar y mantener el indice (benchmark). |
+
+Comparar TOPN vs PHASE vs SPY aisla cuanto aporta la capa tecnica (score) por encima de
+la teoria del ciclo y por encima del mercado.
+
+**Metricas:** CAGR, retorno total, volatilidad, Sharpe, Sortino, max drawdown, hit-rate
+mensual vs SPY, exceso de CAGR y rendimiento medio por cada fase del ciclo.
+
+```powershell
+# Validar el motor sin internet ni API key (20 anos sinteticos):
+python -m src.backtest --synthetic
+
+# Backtest REAL (requiere FRED_API_KEY; descarga ~20 anos de FRED + Yahoo):
+$env:FRED_API_KEY = "tu_api_key_aqui"
+python -m src.backtest --years 20 --top 3 --rebalance M
+
+# Ver el informe:
+start docs\backtest.html
+```
+
+**Salidas:** `docs/data/backtest.json` (metricas + curvas + timeline de fase) y
+`docs/backtest.html` (informe visual autocontenido con grafico SVG, sin dependencias).
+
+> Nota: con `--synthetic` los datos son artificiales (sirven para validar la mecanica,
+> no son resultados reales). Para numeros reales necesitas la FRED API key.
+
+---
+
 ## Como leer el dashboard
 
 **Banner superior (rojo/amarillo/azul):** alerta cuando hay cambio de fase, divergencia macro/mercado o cambio de lider sectorial.
