@@ -140,11 +140,18 @@ la fase del ciclo y el ranking sectorial, y simula tres estrategias:
 | Estrategia | Que hace |
 |---|---|
 | **TOPN** | Equipondera los N sectores con mayor score compuesto (el motor completo). |
+| **ADAPT** | Como TOPN pero "menos defensivo en bull": si el SPY esta sobre su SMA200 ignora el sesgo de fase y prioriza momentum; si esta por debajo, refuerza la defensa. |
 | **PHASE** | Compra los sectores `favored` de la fase vigente (teoria pura de Stovall). |
-| **SPY** | Comprar y mantener el indice (benchmark). |
+| **SPY** | Comprar y mantener el indice ponderado por capitalizacion (benchmark). |
+| **RSP** | Comprar y mantener el S&P 500 equiponderado (benchmark JUSTO para una rotacion equiponderada). |
 
-Comparar TOPN vs PHASE vs SPY aisla cuanto aporta la capa tecnica (score) por encima de
-la teoria del ciclo y por encima del mercado.
+Comparar TOPN vs ADAPT vs PHASE vs SPY/RSP aisla cuanto aporta cada capa: el score
+tecnico, el filtro de tendencia adaptativo, la teoria del ciclo y el mercado.
+
+> Hallazgo (2007-2026, datos reales): **ADAPT** recupera el retorno que el sesgo defensivo
+> le costaba a TOPN (iguala a RSP en CAGR, con Sharpe superior) manteniendo gran parte de
+> la proteccion en crisis (drawdown muy inferior a los benchmarks). Es un experimento del
+> backtest; no esta cableado en el sistema de produccion.
 
 **Metricas:** CAGR, retorno total, volatilidad, Sharpe, Sortino, max drawdown, hit-rate
 mensual vs SPY, exceso de CAGR y rendimiento medio por cada fase del ciclo.

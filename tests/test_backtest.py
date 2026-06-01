@@ -74,6 +74,16 @@ def test_simulate_equal_weight():
     assert abs(port.loc[idx[3]] - (-0.05)) < 1e-9
 
 
+def test_adapt_weights_normalized():
+    """Los pesos adaptativos (bull y bear) deben sumar 1.0."""
+    assert abs(sum(bt._ADAPT_BULL_W.values()) - 1.0) < 1e-9
+    assert abs(sum(bt._ADAPT_BEAR_W.values()) - 1.0) < 1e-9
+    # En bull, sin sesgo de fase; en bear, sesgo de fase reforzado.
+    assert bt._ADAPT_BULL_W["phase_alignment"] == 0.0
+    assert bt._ADAPT_BEAR_W["phase_alignment"] > bt._ADAPT_BULL_W["phase_alignment"]
+    assert bt._ADAPT_BULL_W["momentum"] > bt._ADAPT_BEAR_W["momentum"]
+
+
 def test_rebalance_dates_warmup():
     """Las fechas de rebalanceo deben respetar el warm-up inicial."""
     trading = pd.bdate_range("2010-01-01", periods=600)

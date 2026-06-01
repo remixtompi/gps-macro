@@ -176,6 +176,15 @@ def load_synthetic_data(years: int) -> tuple[Dict[str, pd.Series], Dict[str, pd.
 # 2. RECONSTRUCCION POINT-IN-TIME
 # ============================================================
 
+# Pesos adaptativos para la estrategia ADAPT (experimento "menos defensivo en bull").
+# En tendencia alcista (SPY > SMA200) dejamos mandar al momentum/tendencia y anulamos
+# el sesgo defensivo de la fase. En tendencia bajista, reforzamos la defensa (fase).
+_ADAPT_BULL_W = {"mansfield_rs": 0.25, "momentum": 0.40, "cross_rank": 0.20,
+                 "breadth": 0.10, "volume_flow": 0.05, "phase_alignment": 0.0}
+_ADAPT_BEAR_W = {"mansfield_rs": 0.20, "momentum": 0.20, "cross_rank": 0.10,
+                 "breadth": 0.10, "volume_flow": 0.10, "phase_alignment": 0.30}
+
+
 @dataclass
 class RebalancePoint:
     date: pd.Timestamp
@@ -187,6 +196,8 @@ class RebalancePoint:
     leader_score: Optional[float]
     topn: List[str]          # seleccion estrategia TOPN
     favored: List[str]       # seleccion estrategia PHASE (favored con datos disponibles)
+    adaptive: List[str] = field(default_factory=list)  # seleccion estrategia ADAPT
+    bull: bool = True        # regimen de tendencia (SPY > SMA200) en esta fecha
 
 
 def _truncate(data: Dict[str, pd.Series], upto: pd.Timestamp) -> Dict[str, pd.Series]:
@@ -255,6 +266,20 @@ def reconstruct(
         avail = {r.ticker for r in readings}
         favored = [t for t in phase["favored_sectors"] if t in avail]
 
+        # ADAPT: regimen de tendencia (SPY vs SMA200, point-in-time) y re-scoring
+        spy_T = sectors_T.get(config.BENCHMARK)
+        bull = True
+        if spy_T is not None and len(spy_T.dropna()) >= 200:
+            sp = spy_T.dropna()
+            bull = bool(sp.iloc[-1] > sp.tail(200).mean())
+        w = _ADAPT_BULL_W if bull else _ADAPT_BEAR_W
+        adapt_ranked = sorted(
+            readings,
+            key=lambda r: sum(r.components.get(k, 0.0) * wv for k, wv in w.items()),
+            reverse=True,
+        )
+        adaptive = [r.ticker for r in adapt_ranked[:top_n]]
+
         leader = readings[0]
         points.append(RebalancePoint(
             date=d,
@@ -266,6 +291,8 @@ def reconstruct(
             leader_score=round(leader.score, 1),
             topn=topn,
             favored=favored,
+            adaptive=adaptive,
+            bull=bull,
         ))
         if (i + 1) % 24 == 0:
             _log(f"  ...{i + 1}/{len(rebal_dates)} rebalanceos reconstruidos")
@@ -408,7 +435,8 @@ def _downsample(eq: pd.Series, max_points: int = 600) -> List[Dict]:
 def _svg_chart(curves: Dict[str, pd.Series], width: int = 900, height: int = 380) -> str:
     """Grafico de lineas SVG (escala log) de las curvas de capital. Sin dependencias."""
     pad_l, pad_r, pad_t, pad_b = 60, 130, 20, 40
-    colors = {"TOPN": "#2563eb", "PHASE": "#f59e0b", "SPY": "#6b7280", "RSP": "#15803d"}
+    colors = {"TOPN": "#2563eb", "ADAPT": "#7c3aed", "PHASE": "#f59e0b",
+              "SPY": "#6b7280", "RSP": "#15803d"}
     # dominio comun de fechas / valores
     all_idx = sorted(set().union(*[set(c.index) for c in curves.values()]))
     if not all_idx:
@@ -474,7 +502,7 @@ def build_html_report(results: Dict, curves: Dict[str, pd.Series]) -> str:
     m = results["metrics"]
     cfg = results["config"]
     svg = _svg_chart(curves)
-    strategies = [s for s in ("TOPN", "PHASE", "SPY", "RSP") if s in m]
+    strategies = [s for s in ("TOPN", "ADAPT", "PHASE", "SPY", "RSP") if s in m]
     has_rsp = "RSP" in m
 
     def metric_row(label, key, pct=True):
@@ -533,8 +561,10 @@ def build_html_report(results: Dict, curves: Dict[str, pd.Series]) -> str:
     <h3>Curva de capital (base 100, escala logaritmica)</h3>
     {svg}
     <p class="legend">TOPN = top-{cfg['top_n']} sectores por score compuesto &middot;
+       ADAPT = como TOPN pero "menos defensivo en bull" (si SPY &gt; SMA200 ignora el sesgo
+       de fase y prioriza momentum; si SPY &lt; SMA200 refuerza la defensa) &middot;
        PHASE = sectores favorecidos por la fase (teoria pura) &middot;
-       SPY = comprar y mantener el indice.</p>
+       SPY / RSP = comprar y mantener (cap-weight / equiponderado).</p>
   </div>
 
   <div class="card">
@@ -603,8 +633,10 @@ def run_backtest(years: int = 20, top_n: int = 3, rebalance: str = "M",
     _log("3) Simulando estrategias...")
     sel_topn = {p.date: p.topn for p in points}
     sel_phase = {p.date: p.favored for p in points}
+    sel_adapt = {p.date: p.adaptive for p in points}
     topn_ret = _simulate(sel_topn, rets, trading)
     phase_ret = _simulate(sel_phase, rets, trading)
+    adapt_ret = _simulate(sel_adapt, rets, trading)
     # Benchmarks alineados al mismo periodo operado
     start_day = points[0].date
     spy_ret_bt = spy_ret.loc[spy_ret.index > start_day]
@@ -621,6 +653,7 @@ def run_backtest(years: int = 20, top_n: int = 3, rebalance: str = "M",
         benchmarks["RSP"] = rsp_ret_bt
     metrics = {
         "TOPN": perf_metrics(topn_ret, benchmarks),
+        "ADAPT": perf_metrics(adapt_ret, benchmarks),
         "PHASE": perf_metrics(phase_ret, benchmarks),
         "SPY": perf_metrics(spy_ret_bt),
     }
@@ -630,6 +663,7 @@ def run_backtest(years: int = 20, top_n: int = 3, rebalance: str = "M",
 
     curves = {
         "TOPN": equity_curve(topn_ret, 1.0),
+        "ADAPT": equity_curve(adapt_ret, 1.0),
         "PHASE": equity_curve(phase_ret, 1.0),
         "SPY": equity_curve(spy_ret_bt, 1.0),
     }
@@ -644,11 +678,14 @@ def run_backtest(years: int = 20, top_n: int = 3, rebalance: str = "M",
         "period": {"start": str(points[0].date.date()), "end": str(points[-1].date.date())},
         "metrics": metrics,
         "per_phase": phase_stats,
+        "bull_periods": sum(1 for p in points if p.bull),
+        "bear_periods": sum(1 for p in points if not p.bull),
         "phase_timeline": [
             {"date": str(p.date.date()), "phase": p.phase_code,
              "growth": round(p.growth, 3), "stress": round(p.stress, 3),
              "leader": p.leader, "leader_score": p.leader_score,
-             "topn": p.topn}
+             "regime": "bull" if p.bull else "bear",
+             "topn": p.topn, "adaptive": p.adaptive}
             for p in points
         ],
         "equity_curves": {k: _downsample(v) for k, v in curves.items()},
@@ -672,7 +709,7 @@ def run_backtest(years: int = 20, top_n: int = 3, rebalance: str = "M",
 
 def _print_summary(results: Dict) -> None:
     m = results["metrics"]
-    strategies = [s for s in ("TOPN", "PHASE", "SPY", "RSP") if s in m]
+    strategies = [s for s in ("TOPN", "ADAPT", "PHASE", "SPY", "RSP") if s in m]
     has_rsp = "RSP" in m
     width = 24 + 12 * len(strategies)
     print("\n" + "=" * width)
