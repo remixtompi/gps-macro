@@ -37,6 +37,11 @@ jobs:
       - name: Run pipeline
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          # Opcionales: alertas push por Telegram (si no estan, el pipeline las omite).
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GPS_DASHBOARD_URL: ${{ vars.GPS_DASHBOARD_URL }}
+          GPS_NOTIFY_ALWAYS: ${{ vars.GPS_NOTIFY_ALWAYS }}
         run: python -m src.main
 
       - name: Commit & push dashboard

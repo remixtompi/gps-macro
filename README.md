@@ -169,6 +169,36 @@ start docs\backtest.html
 
 ---
 
+## Alertas push por Telegram (opcional)
+
+El sistema puede **avisarte automaticamente** cuando detecta un evento relevante
+(cambio de fase, cambio de sector lider o divergencia macro/mercado), sin que tengas
+que entrar a la web. Es **opcional**: si no lo configuras, el pipeline lo omite.
+
+### Configuracion (una vez, ~5 min, gratis)
+
+1. **Crear el bot:** en Telegram, habla con **@BotFather** → `/newbot` → elige nombre →
+   copia el **token** que te da (formato `123456:ABC-...`).
+2. **Obtener tu chat id:** habla con **@userinfobot** (te responde tu `Id` numerico).
+   Luego abre tu bot y pulsa "Start" para que pueda escribirte.
+3. **Probar en local** (PowerShell):
+   ```powershell
+   $env:TELEGRAM_BOT_TOKEN = "tu_token"
+   $env:TELEGRAM_CHAT_ID   = "tu_chat_id"
+   python -m src.notifier --test    # debe llegarte un mensaje de prueba
+   ```
+4. **Activarlo en GitHub** (para las ejecuciones automaticas): repo → **Settings →
+   Secrets and variables → Actions**:
+   - Secret `TELEGRAM_BOT_TOKEN` = tu token
+   - Secret `TELEGRAM_CHAT_ID` = tu chat id
+   - *(Opcional)* Variable `GPS_DASHBOARD_URL` = la URL de tu dashboard (para incluir el enlace).
+   - *(Opcional)* Variable `GPS_NOTIFY_ALWAYS` = `1` para recibir un resumen **cada dia**
+     aunque no haya eventos (por defecto solo avisa cuando hay alerta).
+
+Desde la siguiente ejecucion programada recibiras los avisos en Telegram.
+
+---
+
 ## Como leer el dashboard
 
 **Banner superior (rojo/amarillo/azul):** alerta cuando hay cambio de fase, divergencia macro/mercado o cambio de lider sectorial.

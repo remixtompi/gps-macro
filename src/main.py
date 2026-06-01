@@ -16,6 +16,7 @@ from . import sector_rotation
 from . import divergence
 from . import history_manager
 from . import dashboard_builder
+from . import notifier
 
 
 def _log(msg: str) -> None:
@@ -125,6 +126,15 @@ def run(use_synthetic: bool = False) -> int:
     html = dashboard_builder.build_dashboard(snapshot, history, subsectors_payload)
     dashboard_builder.write_snapshot_files(snapshot, history, html)
     _log(f"  -> {config.INDEX_HTML}")
+
+    # 9) Notificacion push (Telegram) — opcional, tolerante a fallos
+    _log("Comprobando notificaciones push...")
+    try:
+        sent = notifier.notify(snapshot, history)
+        if sent:
+            _log("  -> Notificacion enviada.")
+    except Exception as e:
+        _log(f"  -> Notificacion fallo (no critico): {e}")
 
     _log("Pipeline finalizado correctamente.")
     return 0
