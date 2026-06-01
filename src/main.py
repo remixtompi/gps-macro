@@ -17,6 +17,7 @@ from . import divergence
 from . import history_manager
 from . import dashboard_builder
 from . import notifier
+from . import data_quality
 
 
 def _log(msg: str) -> None:
@@ -50,6 +51,13 @@ def run(use_synthetic: bool = False) -> int:
         except Exception as e:
             _log(f"  -> Volumenes no disponibles ({e}); seguiremos sin OBV.")
             sector_volumes = None
+
+    # 1b) Validacion de calidad de datos
+    _log("Validando calidad de los datos...")
+    quality = data_quality.assess(macro_data, sector_prices)
+    _log(f"  -> Fiabilidad: {quality.label.upper()} ({quality.reliability*100:.0f}%)")
+    for w in quality.warnings:
+        _log(f"  !! {w}")
 
     # 2) Modelo macro
     _log("Calculando modelo de fase del ciclo...")
@@ -109,6 +117,7 @@ def run(use_synthetic: bool = False) -> int:
         "sectors": sectors_payload,
         "sentiment": sent_payload,
         "subsectors": subsectors_payload,
+        "data_quality": data_quality.quality_payload(quality),
     }
 
     # 7) Historico

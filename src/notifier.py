@@ -146,6 +146,14 @@ def build_alert_message(snapshot: Dict, alerts: Dict) -> Optional[str]:
             f"({sentiment.get('sentiment', 0.0):+.2f})"
         )
 
+    # Aviso de fiabilidad de datos (si no es alta)
+    dq = snapshot.get("data_quality", {})
+    if dq and dq.get("label") and dq.get("label") != "alta":
+        lines.append(
+            f"\n🛑 <b>Fiabilidad de datos {dq['label'].upper()}</b> "
+            f"({dq.get('reliability', 0)*100:.0f}%) — interpreta con cautela."
+        )
+
     url = os.environ.get("GPS_DASHBOARD_URL", "").strip()
     if url:
         lines.append(f"\n🔗 {url}")

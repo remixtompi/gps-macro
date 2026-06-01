@@ -17,8 +17,23 @@
   <div class="meta">
     <div>Actualizado: <strong>{{ updated_at }}</strong></div>
     <div>Proxima ejecucion: <span class="muted">{{ next_run }}</span></div>
+    {% if data_quality and data_quality.label %}
+    <div>Fiabilidad de datos:
+      <strong style="color: {% if data_quality.label == 'alta' %}#22c55e{% elif data_quality.label == 'media' %}#f59e0b{% else %}#ef4444{% endif %}">
+        {{ data_quality.label|upper }} ({{ (data_quality.reliability * 100)|round|int }}%)
+      </strong>
+    </div>
+    {% endif %}
   </div>
 </header>
+
+{% if data_quality and data_quality.label and data_quality.label != 'alta' %}
+<div class="alert-banner alert-yellow">
+  <strong>FIABILIDAD DE DATOS {{ data_quality.label|upper }}:</strong>
+  algunas series fallaron o estan desactualizadas. Interpreta el resultado con cautela.
+  {% if data_quality.warnings %}<span class="muted">({{ data_quality.warnings|join('; ') }})</span>{% endif %}
+</div>
+{% endif %}
 
 {% if alerts.phase_change %}
 <div class="alert-banner alert-red">
