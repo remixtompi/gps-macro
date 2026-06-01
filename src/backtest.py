@@ -198,6 +198,8 @@ class RebalancePoint:
     favored: List[str]       # seleccion estrategia PHASE (favored con datos disponibles)
     adaptive: List[str] = field(default_factory=list)  # seleccion estrategia ADAPT
     bull: bool = True        # regimen de tendencia (SPY > SMA200) en esta fecha
+    # componentes por sector disponible (para re-evaluar ADAPT con otros parametros barato)
+    components: Dict[str, Dict[str, float]] = field(default_factory=dict)
 
 
 def _truncate(data: Dict[str, pd.Series], upto: pd.Timestamp) -> Dict[str, pd.Series]:
@@ -293,6 +295,7 @@ def reconstruct(
             favored=favored,
             adaptive=adaptive,
             bull=bull,
+            components={r.ticker: dict(r.components) for r in readings},
         ))
         if (i + 1) % 24 == 0:
             _log(f"  ...{i + 1}/{len(rebal_dates)} rebalanceos reconstruidos")
@@ -600,6 +603,100 @@ def build_html_report(results: Dict, curves: Dict[str, pd.Series]) -> str:
 
 
 # ============================================================
+# 5b. ROBUSTEZ DE LA ESTRATEGIA ADAPT
+# ============================================================
+
+def _adapt_select(components: Dict[str, Dict[str, float]], bull: bool, top_n: int) -> List[str]:
+    """Selecciona top-N recalculando el score adaptativo desde los componentes guardados."""
+    w = _ADAPT_BULL_W if bull else _ADAPT_BEAR_W
+    ranked = sorted(
+        components.items(),
+        key=lambda kv: sum(kv[1].get(k, 0.0) * wv for k, wv in w.items()),
+        reverse=True,
+    )
+    return [t for t, _c in ranked[:top_n]]
+
+
+def run_robustness(years: int = 20, top_n: int = 3, rebalance: str = "M",
+                   synthetic: bool = False, yahoo_only: bool = False,
+                   mas: Optional[List[int]] = None) -> Dict:
+    """Comprueba si ADAPT es robusto al periodo de la media movil de tendencia.
+    Reconstruye una sola vez y reevalua la seleccion ADAPT para cada media en `mas`."""
+    mas = mas or [100, 120, 150, 200, 250]
+    _log(f"Robustez ADAPT  (years={years}, top_n={top_n}, mas={mas})")
+
+    if synthetic:
+        macro, sectors, volumes = load_synthetic_data(years)
+    else:
+        macro, sectors, volumes = load_real_data(years, yahoo_only=yahoo_only)
+    if config.BENCHMARK not in sectors:
+        raise RuntimeError("No se pudo cargar el benchmark SPY.")
+
+    points = reconstruct(macro, sectors, volumes, top_n, rebalance)
+    if len(points) < 6:
+        raise RuntimeError("Rebalanceos insuficientes.")
+
+    bench = sectors[config.BENCHMARK].dropna()
+    trading = bench.index
+    rets = _daily_returns_frame(sectors, trading)
+    spy = bench.copy()
+    start_day = points[0].date
+    spy_ret_bt = bench.pct_change().loc[lambda s: s.index > start_day]
+    benchmarks = {"SPY": spy_ret_bt}
+    has_rsp = "RSP" in sectors and not sectors["RSP"].dropna().empty
+    if has_rsp:
+        rsp_ret_bt = sectors["RSP"].reindex(trading).pct_change().loc[lambda s: s.index > start_day]
+        benchmarks["RSP"] = rsp_ret_bt
+
+    # Referencia: TOPN (sin filtro) y RSP
+    topn_ret = _simulate({p.date: p.topn for p in points}, rets, trading)
+    rows = {"TOPN (sin filtro)": perf_metrics(topn_ret, benchmarks)}
+
+    # ADAPT con cada media movil
+    for ma in mas:
+        sma = spy.rolling(ma).mean()
+        sel = {}
+        for p in points:
+            d = p.date
+            price = float(spy.loc[:d].iloc[-1])
+            mv = sma.loc[:d]
+            mval = float(mv.iloc[-1]) if len(mv) and not np.isnan(mv.iloc[-1]) else price
+            bull = price > mval
+            sel[d] = _adapt_select(p.components, bull, top_n)
+        adapt_ret = _simulate(sel, rets, trading)
+        rows[f"ADAPT SMA{ma}"] = perf_metrics(adapt_ret, benchmarks)
+
+    if has_rsp:
+        rows["RSP (benchmark)"] = perf_metrics(rsp_ret_bt, {"SPY": spy_ret_bt})
+
+    _print_robustness(rows, points[0].date, points[-1].date, has_rsp)
+    return rows
+
+
+def _print_robustness(rows: Dict[str, Dict], start, end, has_rsp: bool) -> None:
+    print("\n" + "=" * 84)
+    print(f"  ROBUSTEZ ADAPT  ({start.date()} -> {end.date()})")
+    print("=" * 84)
+    bench_key = "excess_cagr_vs_RSP" if has_rsp else "excess_cagr_vs_SPY"
+    bench_lbl = "vs RSP" if has_rsp else "vs SPY"
+    print(f"  {'Estrategia':<22}{'CAGR':>10}{'Sharpe':>9}{'MaxDD':>10}{'Exc.'+bench_lbl:>14}")
+    print("  " + "-" * 80)
+    for name, m in rows.items():
+        if not m:
+            continue
+        cagr = f"{m['cagr']*100:+.1f}%"
+        sh = f"{m['sharpe']:.2f}"
+        dd = f"{m['max_drawdown']*100:.1f}%"
+        exc = m.get(bench_key)
+        exc_s = f"{exc*100:+.1f}%" if exc is not None else "-"
+        print(f"  {name:<22}{cagr:>10}{sh:>9}{dd:>10}{exc_s:>14}")
+    print("=" * 84)
+    print("  Si todas las filas ADAPT SMA* baten a 'TOPN sin filtro', la mejora es ROBUSTA")
+    print("  (no depende de elegir justo SMA200).")
+    print()
+
+
+# ============================================================
 # 6. ORQUESTADOR
 # ============================================================
 
@@ -760,10 +857,16 @@ def main() -> int:
     ap.add_argument("--yahoo-only", action="store_true", dest="yahoo_only",
                     help="Omite FRED: fase macro simplificada (Copper/Gold + VIX). "
                          "Datos de mercado REALES sin necesidad de FRED_API_KEY.")
+    ap.add_argument("--robustness", action="store_true",
+                    help="Comprueba la robustez de ADAPT a la media movil (100/120/150/200/250).")
     args = ap.parse_args()
     try:
-        run_backtest(years=args.years, top_n=args.top, rebalance=args.rebalance,
-                     synthetic=args.synthetic, yahoo_only=args.yahoo_only)
+        if args.robustness:
+            run_robustness(years=args.years, top_n=args.top, rebalance=args.rebalance,
+                           synthetic=args.synthetic, yahoo_only=args.yahoo_only)
+        else:
+            run_backtest(years=args.years, top_n=args.top, rebalance=args.rebalance,
+                         synthetic=args.synthetic, yahoo_only=args.yahoo_only)
         return 0
     except Exception as e:
         _log(f"ERROR FATAL: {e}")

@@ -84,6 +84,20 @@ def test_adapt_weights_normalized():
     assert bt._ADAPT_BULL_W["momentum"] > bt._ADAPT_BEAR_W["momentum"]
 
 
+def test_adapt_select_bull_vs_bear():
+    """En bull manda el momentum; en bear, el alineamiento de fase (defensa)."""
+    components = {
+        "XLK": {"mansfield_rs": 0.5, "momentum": 0.9, "cross_rank": 0.8,
+                "breadth": 0.5, "volume_flow": 0.3, "phase_alignment": -1.0},  # ciclico fuerte, a evitar en defensa
+        "XLP": {"mansfield_rs": 0.1, "momentum": -0.2, "cross_rank": -0.3,
+                "breadth": 0.0, "volume_flow": 0.0, "phase_alignment": 1.0},   # defensivo favorecido
+    }
+    bull_pick = bt._adapt_select(components, bull=True, top_n=1)
+    bear_pick = bt._adapt_select(components, bull=False, top_n=1)
+    assert bull_pick == ["XLK"]   # en bull gana el momentum
+    assert bear_pick == ["XLP"]   # en bear gana la defensa (phase_alignment)
+
+
 def test_rebalance_dates_warmup():
     """Las fechas de rebalanceo deben respetar el warm-up inicial."""
     trading = pd.bdate_range("2010-01-01", periods=600)
