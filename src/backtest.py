@@ -696,6 +696,67 @@ def _print_robustness(rows: Dict[str, Dict], start, end, has_rsp: bool) -> None:
     print()
 
 
+def run_subperiods(years: int = 20, top_n: int = 3, rebalance: str = "M",
+                   synthetic: bool = False, yahoo_only: bool = False) -> Dict:
+    """Evalua TOPN/ADAPT/SPY/RSP en sub-periodos (crisis, bull, COVID+) para comprobar
+    que la ventaja de ADAPT es estable en el tiempo y no se concentra en una sola epoca."""
+    _log(f"Sub-periodos  (years={years}, top_n={top_n})")
+    if synthetic:
+        macro, sectors, volumes = load_synthetic_data(years)
+    else:
+        macro, sectors, volumes = load_real_data(years, yahoo_only=yahoo_only)
+    if config.BENCHMARK not in sectors:
+        raise RuntimeError("No se pudo cargar el benchmark SPY.")
+
+    points = reconstruct(macro, sectors, volumes, top_n, rebalance)
+    if len(points) < 6:
+        raise RuntimeError("Rebalanceos insuficientes.")
+
+    bench = sectors[config.BENCHMARK].dropna()
+    trading = bench.index
+    rets = _daily_returns_frame(sectors, trading)
+    start_day = points[0].date
+
+    topn_ret = _simulate({p.date: p.topn for p in points}, rets, trading)
+    adapt_ret = _simulate({p.date: p.adaptive for p in points}, rets, trading)
+    spy_ret = bench.pct_change().loc[lambda s: s.index > start_day]
+    series = {"TOPN": topn_ret, "ADAPT": adapt_ret, "SPY": spy_ret}
+    if "RSP" in sectors and not sectors["RSP"].dropna().empty:
+        series["RSP"] = sectors["RSP"].reindex(trading).pct_change().loc[lambda s: s.index > start_day]
+
+    data_start = points[0].date
+    data_end = points[-1].date
+    windows = [
+        ("Crisis financiera", pd.Timestamp("2007-01-01"), pd.Timestamp("2009-12-31")),
+        ("Bull market 2010s", pd.Timestamp("2010-01-01"), pd.Timestamp("2019-12-31")),
+        ("COVID y posterior", pd.Timestamp("2020-01-01"), pd.Timestamp("2035-01-01")),
+    ]
+
+    out: Dict[str, Dict] = {}
+    print("\n" + "=" * 76)
+    print(f"  ADAPT POR SUB-PERIODOS  (datos {data_start.date()} -> {data_end.date()})")
+    print("=" * 76)
+    for label, w0, w1 in windows:
+        lo = max(w0, data_start)
+        hi = min(w1, data_end)
+        if (hi - lo).days < 180:
+            continue
+        print(f"\n  [{label}]  {lo.date()} -> {hi.date()}")
+        print(f"    {'Estrategia':<10}{'CAGR':>10}{'Sharpe':>9}{'MaxDD':>10}")
+        win_metrics = {}
+        for name, s in series.items():
+            sl = s.loc[(s.index >= lo) & (s.index <= hi)]
+            m = perf_metrics(sl)
+            win_metrics[name] = m
+            if m:
+                print(f"    {name:<10}{m['cagr']*100:>+9.1f}%{m['sharpe']:>9.2f}{m['max_drawdown']*100:>9.1f}%")
+        out[label] = win_metrics
+    print("\n" + "=" * 76)
+    print("  Busca: ADAPT >= TOPN en CADA sub-periodo (ventaja estable, no concentrada).")
+    print()
+    return out
+
+
 # ============================================================
 # 6. ORQUESTADOR
 # ============================================================
@@ -859,10 +920,15 @@ def main() -> int:
                          "Datos de mercado REALES sin necesidad de FRED_API_KEY.")
     ap.add_argument("--robustness", action="store_true",
                     help="Comprueba la robustez de ADAPT a la media movil (100/120/150/200/250).")
+    ap.add_argument("--subperiods", action="store_true",
+                    help="Evalua TOPN/ADAPT/SPY/RSP por sub-periodos (crisis/bull/covid).")
     args = ap.parse_args()
     try:
         if args.robustness:
             run_robustness(years=args.years, top_n=args.top, rebalance=args.rebalance,
+                           synthetic=args.synthetic, yahoo_only=args.yahoo_only)
+        elif args.subperiods:
+            run_subperiods(years=args.years, top_n=args.top, rebalance=args.rebalance,
                            synthetic=args.synthetic, yahoo_only=args.yahoo_only)
         else:
             run_backtest(years=args.years, top_n=args.top, rebalance=args.rebalance,
