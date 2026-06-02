@@ -21,7 +21,7 @@ Genera un **dashboard web estatico** que se publica automaticamente en GitHub Pa
 | Jobless Claims 4-Week MA | FRED `IC4WSA` | Crecimiento |
 | High Yield OAS Spread | FRED `BAMLH0A0HYM2` | Stress |
 | Chicago Fed NFCI | FRED `NFCI` | Stress |
-| State Coincident LEI proxy | FRED `USSLIND` | Crecimiento |
+| Chicago Fed National Activity Index (LEI proxy) | FRED `CFNAI` | Crecimiento |
 | Breakeven Inflation 5Y | FRED `T5YIE` | Stress |
 | Copper/Gold Ratio | Yahoo `HG=F`/`GC=F` | Crecimiento |
 | VIX | Yahoo `^VIX` | Stress |

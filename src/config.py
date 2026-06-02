@@ -27,7 +27,7 @@ MACRO_SERIES = [
     ("jobless_4w",   "IC4WSA",     "Jobless Claims Initial (4W MA)",        "growth", -1),
     ("hy_oas",       "BAMLH0A0HYM2","High Yield OAS Spread",                "stress", -1),
     ("nfci",         "NFCI",       "Chicago Fed Financial Conditions Index","stress", -1),
-    ("lei_proxy",    "USSLIND",    "State Coincident Index (LEI proxy)",    "growth", +1),
+    ("lei_proxy",    "CFNAI",      "Chicago Fed National Activity Index",   "growth", +1),
     ("breakeven_5y", "T5YIE",      "Breakeven Inflation 5Y",                "stress", -1),
 ]
 
