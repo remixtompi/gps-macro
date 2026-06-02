@@ -78,6 +78,19 @@ def run(use_synthetic: bool = False) -> int:
     else:
         _log("  -> No se pudo calcular ningun sector.")
 
+    # 3b) Vista ADAPT: regimen de tendencia + cartera adaptativa (validada por backtest)
+    spy_prices = sector_prices.get(config.BENCHMARK)
+    regime_bull = sector_rotation.compute_regime(spy_prices) if spy_prices is not None else True
+    adaptive_top = sector_rotation.adaptive_ranking(sector_readings, regime_bull, top_n=3)
+    adapt_payload = {
+        "regime": "bull" if regime_bull else "bear",
+        "trend_ma": config.ADAPT_TREND_MA,
+        "top": adaptive_top,
+    }
+    if adaptive_top:
+        _log(f"  -> Regimen: {'ALCISTA' if regime_bull else 'BAJISTA'} | "
+             f"ADAPT top: {', '.join(t['ticker'] for t in adaptive_top)}")
+
     # 4) Sentimiento + divergencia
     _log("Calculando sentimiento de mercado y divergencias...")
     sentiment_result = divergence.compute_sentiment(macro_data, sector_prices, sector_readings)
@@ -118,6 +131,7 @@ def run(use_synthetic: bool = False) -> int:
         "sentiment": sent_payload,
         "subsectors": subsectors_payload,
         "data_quality": data_quality.quality_payload(quality),
+        "adapt": adapt_payload,
     }
 
     # 7) Historico

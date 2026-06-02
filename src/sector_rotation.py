@@ -269,6 +269,33 @@ def compute_subsector_scores(
     return out
 
 
+def compute_regime(spy_prices: pd.Series, ma: int = config.ADAPT_TREND_MA) -> bool:
+    """Regimen de tendencia: True (bull) si el SPY esta sobre su media movil de `ma` dias."""
+    s = spy_prices.dropna()
+    if len(s) < ma:
+        return True  # sin datos suficientes, asumimos bull (neutro)
+    return bool(float(s.iloc[-1]) > float(s.tail(ma).mean()))
+
+
+def adaptive_ranking(readings: List[SectorReading], bull: bool, top_n: int = 3) -> List[Dict]:
+    """Re-puntua los sectores con los pesos ADAPT (segun el regimen) y devuelve el top-N.
+
+    En bull prioriza momentum y anula el sesgo de fase; en bear refuerza la defensa.
+    Reutiliza los componentes ya calculados en cada SectorReading (sin coste extra)."""
+    weights = config.ADAPT_BULL_WEIGHTS if bull else config.ADAPT_BEAR_WEIGHTS
+    scored = []
+    for r in readings:
+        raw = sum(r.components.get(k, 0.0) * w for k, w in weights.items())
+        score_100 = 50.0 + float(np.clip(raw, -1.0, 1.0)) * 50.0
+        scored.append((r, score_100))
+    scored.sort(key=lambda x: x[1], reverse=True)
+    return [
+        {"ticker": r.ticker, "name": r.name, "short": r.short,
+         "score": round(s, 2), "pct_1d": round(r.pct_change_1d, 2)}
+        for r, s in scored[:top_n]
+    ]
+
+
 def sector_payload(readings: List[SectorReading]) -> List[Dict]:
     """Convierte readings a JSON serializable."""
     return [

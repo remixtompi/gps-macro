@@ -141,6 +141,20 @@ MOMENTUM_PERIODS = {  # dias de trading
 }
 MOMENTUM_WEIGHTS = {"m1": 0.5, "m3": 0.3, "m6": 0.2}
 
+# ---------- Estrategia ADAPT ("menos defensivo en bull") ----------
+# Filtro de tendencia: si SPY > su media movil de ADAPT_TREND_MA dias -> regimen "bull".
+# Validado por backtest (2007-2026): robusto a la media (120-250) y mejora el caso
+# general; en bull prioriza momentum y anula el sesgo de fase, en bear lo refuerza.
+ADAPT_TREND_MA = 200
+ADAPT_BULL_WEIGHTS = {
+    "mansfield_rs": 0.25, "momentum": 0.40, "cross_rank": 0.20,
+    "breadth": 0.10, "volume_flow": 0.05, "phase_alignment": 0.0,
+}
+ADAPT_BEAR_WEIGHTS = {
+    "mansfield_rs": 0.20, "momentum": 0.20, "cross_rank": 0.10,
+    "breadth": 0.10, "volume_flow": 0.10, "phase_alignment": 0.30,
+}
+
 # ---------- Historico ----------
 HISTORY_MAX_DAYS = 365 * 5   # guardamos hasta 5 anos en history.json
 

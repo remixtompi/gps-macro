@@ -176,13 +176,11 @@ def load_synthetic_data(years: int) -> tuple[Dict[str, pd.Series], Dict[str, pd.
 # 2. RECONSTRUCCION POINT-IN-TIME
 # ============================================================
 
-# Pesos adaptativos para la estrategia ADAPT (experimento "menos defensivo en bull").
-# En tendencia alcista (SPY > SMA200) dejamos mandar al momentum/tendencia y anulamos
-# el sesgo defensivo de la fase. En tendencia bajista, reforzamos la defensa (fase).
-_ADAPT_BULL_W = {"mansfield_rs": 0.25, "momentum": 0.40, "cross_rank": 0.20,
-                 "breadth": 0.10, "volume_flow": 0.05, "phase_alignment": 0.0}
-_ADAPT_BEAR_W = {"mansfield_rs": 0.20, "momentum": 0.20, "cross_rank": 0.10,
-                 "breadth": 0.10, "volume_flow": 0.10, "phase_alignment": 0.30}
+# Pesos adaptativos para la estrategia ADAPT (fuente unica de verdad en config.py).
+# En tendencia alcista (SPY > SMA) prioriza momentum y anula el sesgo de fase; en bajista
+# refuerza la defensa.
+_ADAPT_BULL_W = config.ADAPT_BULL_WEIGHTS
+_ADAPT_BEAR_W = config.ADAPT_BEAR_WEIGHTS
 
 
 @dataclass
@@ -271,9 +269,9 @@ def reconstruct(
         # ADAPT: regimen de tendencia (SPY vs SMA200, point-in-time) y re-scoring
         spy_T = sectors_T.get(config.BENCHMARK)
         bull = True
-        if spy_T is not None and len(spy_T.dropna()) >= 200:
+        if spy_T is not None and len(spy_T.dropna()) >= config.ADAPT_TREND_MA:
             sp = spy_T.dropna()
-            bull = bool(sp.iloc[-1] > sp.tail(200).mean())
+            bull = bool(sp.iloc[-1] > sp.tail(config.ADAPT_TREND_MA).mean())
         w = _ADAPT_BULL_W if bull else _ADAPT_BEAR_W
         adapt_ranked = sorted(
             readings,

@@ -93,6 +93,7 @@ def build_dashboard(snapshot: Dict, history: Dict, subsectors: Optional[List[Dic
         phase_colors=PHASE_COLORS,
         updated_at=snapshot.get("updated_at", "—"),
         data_quality=snapshot.get("data_quality", {}),
+        adapt=snapshot.get("adapt", {}),
         next_run=_next_run_text(),
         snapshot_json=json.dumps(snapshot, ensure_ascii=False),
         history_json=json.dumps({

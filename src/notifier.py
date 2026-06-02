@@ -146,6 +146,12 @@ def build_alert_message(snapshot: Dict, alerts: Dict) -> Optional[str]:
             f"({sentiment.get('sentiment', 0.0):+.2f})"
         )
 
+    adapt = snapshot.get("adapt", {})
+    if adapt and adapt.get("top"):
+        regime = "📈 ALCISTA" if adapt.get("regime") == "bull" else "📉 BAJISTA"
+        adapt_top = ", ".join(f"{t['ticker']} ({t['score']:.0f})" for t in adapt["top"])
+        lines.append(f"🧭 ADAPT [{regime}]: {adapt_top}")
+
     # Aviso de fiabilidad de datos (si no es alta)
     dq = snapshot.get("data_quality", {})
     if dq and dq.get("label") and dq.get("label") != "alta":

@@ -175,6 +175,39 @@
   </table>
 </section>
 
+{% if adapt and adapt.top %}
+<!-- 4b. VISTA ADAPT (filtro de tendencia) -->
+<section class="card">
+  <h2>Vista ADAPT — Regimen de tendencia
+    <span style="font-size:0.8em; padding:2px 10px; border-radius:12px; color:#fff;
+      background: {% if adapt.regime == 'bull' %}#22c55e{% else %}#ef4444{% endif %};">
+      {% if adapt.regime == 'bull' %}ALCISTA (SPY &gt; SMA{{ adapt.trend_ma }}){% else %}BAJISTA (SPY &lt; SMA{{ adapt.trend_ma }}){% endif %}
+    </span>
+  </h2>
+  <p class="muted">
+    {% if adapt.regime == 'bull' %}
+      Tendencia alcista: ADAPT prioriza momentum y relaja el sesgo defensivo de la fase.
+    {% else %}
+      Tendencia bajista: ADAPT refuerza la defensa (mayor peso a la alineacion con la fase).
+    {% endif %}
+    Variante validada por backtest; mejora el caso general pero cede algo de proteccion en crashes agudos.
+  </p>
+  <table>
+    <thead><tr><th>#</th><th>Sector</th><th>Score ADAPT</th><th>1d</th></tr></thead>
+    <tbody>
+    {% for s in adapt.top %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td><strong>{{ s.ticker }}</strong> — {{ s.name }}</td>
+        <td>{{ s.score }}</td>
+        <td class="{% if s.pct_1d >= 0 %}pos{% else %}neg{% endif %}">{{ s.pct_1d }}%</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
 <!-- 5. RECOMENDACION DE FASE -->
 <section class="card card-recommend">
   <h2>Posicionamiento sugerido para fase "{{ macro.phase.label }}"</h2>
