@@ -156,6 +156,19 @@
       },
       "growth": -0.0005981006490270446,
       "stress": -0.04077686906302261
+    },
+    {
+      "date": "2026-06-10",
+      "phase_id": 1,
+      "phase_code": "EXPANSION",
+      "probabilities": {
+        "1": 0.2695271914472061,
+        "2": 0.2384484874908684,
+        "3": 0.2312120710722594,
+        "4": 0.26081224998966607
+      },
+      "growth": 0.010127566892761702,
+      "stress": -0.03867682149643514
     }
   ],
   "leader_timeline": [
@@ -230,6 +243,12 @@
       "leader": "XLK",
       "leader_score": 88.75,
       "runner_up": "XLE"
+    },
+    {
+      "date": "2026-06-10",
+      "leader": "XLK",
+      "leader_score": 92.17,
+      "runner_up": "XLE"
     }
   ],
   "sentiment_timeline": [
@@ -302,6 +321,12 @@
     {
       "date": "2026-06-09",
       "sentiment": 0.185,
+      "label": "Neutral",
+      "divergence": null
+    },
+    {
+      "date": "2026-06-10",
+      "sentiment": 0.186,
       "label": "Neutral",
       "divergence": null
     }
