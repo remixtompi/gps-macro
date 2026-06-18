@@ -247,6 +247,19 @@
       },
       "growth": -0.006974885578208132,
       "stress": -0.1187574607079577
+    },
+    {
+      "date": "2026-06-18",
+      "phase_id": 4,
+      "phase_code": "DESACELERACION",
+      "probabilities": {
+        "1": 0.2701040740221188,
+        "2": 0.19239384603313867,
+        "3": 0.22000638286028001,
+        "4": 0.31749569708446257
+      },
+      "growth": -0.04689023149553311,
+      "stress": -0.11274559345854768
     }
   ],
   "leader_timeline": [
@@ -363,6 +376,12 @@
       "leader": "XLK",
       "leader_score": 87.88,
       "runner_up": "XLB"
+    },
+    {
+      "date": "2026-06-18",
+      "leader": "XLK",
+      "leader_score": 88.49,
+      "runner_up": "XLI"
     }
   ],
   "sentiment_timeline": [
@@ -477,6 +496,12 @@
     {
       "date": "2026-06-17",
       "sentiment": 0.338,
+      "label": "Risk-On",
+      "divergence": null
+    },
+    {
+      "date": "2026-06-18",
+      "sentiment": 0.293,
       "label": "Risk-On",
       "divergence": null
     }
