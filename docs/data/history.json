@@ -468,6 +468,19 @@
       },
       "growth": -0.13372344818971166,
       "stress": -0.1423101026387322
+    },
+    {
+      "date": "2026-07-08",
+      "phase_id": 4,
+      "phase_code": "DESACELERACION",
+      "probabilities": {
+        "1": 0.23434817691626367,
+        "2": 0.16196375331659077,
+        "3": 0.2337903672977009,
+        "4": 0.36989770246944476
+      },
+      "growth": -0.13100445017688878,
+      "stress": -0.13178071652244028
     }
   ],
   "leader_timeline": [
@@ -686,6 +699,12 @@
       "leader": "XLK",
       "leader_score": 83.23,
       "runner_up": "XLI"
+    },
+    {
+      "date": "2026-07-08",
+      "leader": "XLK",
+      "leader_score": 79.08,
+      "runner_up": "XLV"
     }
   ],
   "sentiment_timeline": [
@@ -904,6 +923,12 @@
       "sentiment": 0.379,
       "label": "Risk-On",
       "divergence": "market_better"
+    },
+    {
+      "date": "2026-07-08",
+      "sentiment": 0.379,
+      "label": "Risk-On",
+      "divergence": "market_better"
     }
   ],
   "events": [
@@ -914,6 +939,11 @@
     },
     {
       "date": "2026-07-07",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (market_better)"
+    },
+    {
+      "date": "2026-07-08",
       "type": "divergence",
       "message": "Divergencia macro/mercado detectada (market_better)"
     }
