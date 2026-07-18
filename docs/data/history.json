@@ -585,6 +585,19 @@
       },
       "growth": -0.09220533452917816,
       "stress": -0.12015262089185673
+    },
+    {
+      "date": "2026-07-18",
+      "phase_id": 4,
+      "phase_code": "DESACELERACION",
+      "probabilities": {
+        "1": 0.23322623910389692,
+        "2": 0.18462506246337362,
+        "3": 0.2508702466086314,
+        "4": 0.33127845182409804
+      },
+      "growth": -0.10477395258330284,
+      "stress": -0.08129136244443555
     }
   ],
   "leader_timeline": [
@@ -857,6 +870,12 @@
       "leader": "XLK",
       "leader_score": 70.29,
       "runner_up": "XLE"
+    },
+    {
+      "date": "2026-07-18",
+      "leader": "XLE",
+      "leader_score": 72.95,
+      "runner_up": "XLK"
     }
   ],
   "sentiment_timeline": [
@@ -1129,6 +1148,12 @@
       "sentiment": 0.346,
       "label": "Risk-On",
       "divergence": null
+    },
+    {
+      "date": "2026-07-18",
+      "sentiment": 0.269,
+      "label": "Risk-On",
+      "divergence": null
     }
   ],
   "events": [
@@ -1156,11 +1181,20 @@
       "date": "2026-07-16",
       "type": "divergence",
       "message": "Divergencia macro/mercado detectada (market_better)"
+    },
+    {
+      "date": "2026-07-18",
+      "type": "leader_change",
+      "message": "Nuevo lider sectorial: XLK -> XLE"
     }
   ],
   "_alerts": {
     "phase_change": null,
-    "leader_change": null,
+    "leader_change": {
+      "from": "XLK",
+      "to": "XLE",
+      "previous_date": "2026-07-17"
+    },
     "divergence": null
   }
 }
