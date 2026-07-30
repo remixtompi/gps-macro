@@ -715,6 +715,19 @@
       },
       "growth": 0.037681933485874994,
       "stress": -0.09794026574766918
+    },
+    {
+      "date": "2026-07-30",
+      "phase_id": 1,
+      "phase_code": "EXPANSION",
+      "probabilities": {
+        "1": 0.291370421629561,
+        "2": 0.26198992466814114,
+        "3": 0.21273158860375257,
+        "4": 0.23390806509854528
+      },
+      "growth": 0.06817084854681459,
+      "stress": -0.031968712460331214
     }
   ],
   "leader_timeline": [
@@ -1047,6 +1060,12 @@
       "leader": "XLV",
       "leader_score": 79.05,
       "runner_up": "XLE"
+    },
+    {
+      "date": "2026-07-30",
+      "leader": "XLE",
+      "leader_score": 84.8,
+      "runner_up": "XLV"
     }
   ],
   "sentiment_timeline": [
@@ -1379,6 +1398,12 @@
       "sentiment": 0.07,
       "label": "Neutral",
       "divergence": null
+    },
+    {
+      "date": "2026-07-30",
+      "sentiment": -0.026,
+      "label": "Neutral",
+      "divergence": null
     }
   ],
   "events": [
@@ -1416,14 +1441,19 @@
       "date": "2026-07-29",
       "type": "leader_change",
       "message": "Nuevo lider sectorial: XLE -> XLV"
+    },
+    {
+      "date": "2026-07-30",
+      "type": "leader_change",
+      "message": "Nuevo lider sectorial: XLV -> XLE"
     }
   ],
   "_alerts": {
     "phase_change": null,
     "leader_change": {
-      "from": "XLE",
-      "to": "XLV",
-      "previous_date": "2026-07-28"
+      "from": "XLV",
+      "to": "XLE",
+      "previous_date": "2026-07-29"
     },
     "divergence": null
   }
