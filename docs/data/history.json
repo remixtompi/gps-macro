@@ -1495,6 +1495,19 @@
       },
       "growth": 0.11159882144375892,
       "stress": 0.012604705674447714
+    },
+    {
+      "date": "2026-10-09",
+      "phase_id": 2,
+      "phase_code": "RECALENTAMIENTO",
+      "probabilities": {
+        "1": 0.2724912690675941,
+        "2": 0.3078757233181636,
+        "3": 0.22059776064460082,
+        "4": 0.19903524696964153
+      },
+      "growth": 0.10335072457983144,
+      "stress": 0.03567535392696879
     }
   ],
   "leader_timeline": [
@@ -2187,6 +2200,12 @@
       "leader": "XLK",
       "leader_score": 82.61,
       "runner_up": "XLE"
+    },
+    {
+      "date": "2026-10-09",
+      "leader": "XLE",
+      "leader_score": 86.5,
+      "runner_up": "XLK"
     }
   ],
   "sentiment_timeline": [
@@ -2879,6 +2898,12 @@
       "sentiment": 0.117,
       "label": "Neutral",
       "divergence": null
+    },
+    {
+      "date": "2026-10-09",
+      "sentiment": 0.071,
+      "label": "Neutral",
+      "divergence": null
     }
   ],
   "events": [
@@ -2981,11 +3006,20 @@
       "date": "2026-09-19",
       "type": "leader_change",
       "message": "Nuevo lider sectorial: XLE -> XLK"
+    },
+    {
+      "date": "2026-10-09",
+      "type": "leader_change",
+      "message": "Nuevo lider sectorial: XLK -> XLE"
     }
   ],
   "_alerts": {
     "phase_change": null,
-    "leader_change": null,
+    "leader_change": {
+      "from": "XLK",
+      "to": "XLE",
+      "previous_date": "2026-10-08"
+    },
     "divergence": null
   }
 }
