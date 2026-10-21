@@ -1625,6 +1625,19 @@
       },
       "growth": 0.06941397379068029,
       "stress": 0.10912196535648308
+    },
+    {
+      "date": "2026-10-21",
+      "phase_id": 4,
+      "phase_code": "DESACELERACION",
+      "probabilities": {
+        "1": 0.20187240671913226,
+        "2": 0.18794395559099814,
+        "3": 0.2912818965057323,
+        "4": 0.3189017411841373
+      },
+      "growth": -0.14345072908958023,
+      "stress": -0.025618402834751513
     }
   ],
   "leader_timeline": [
@@ -2377,6 +2390,12 @@
       "leader": "XLE",
       "leader_score": 94.22,
       "runner_up": "XLV"
+    },
+    {
+      "date": "2026-10-21",
+      "leader": "XLV",
+      "leader_score": 89.03,
+      "runner_up": "XLE"
     }
   ],
   "sentiment_timeline": [
@@ -3129,6 +3148,12 @@
       "sentiment": -0.24,
       "label": "Neutral",
       "divergence": null
+    },
+    {
+      "date": "2026-10-21",
+      "sentiment": 0.174,
+      "label": "Neutral",
+      "divergence": null
     }
   ],
   "events": [
@@ -3236,11 +3261,20 @@
       "date": "2026-10-09",
       "type": "leader_change",
       "message": "Nuevo lider sectorial: XLK -> XLE"
+    },
+    {
+      "date": "2026-10-21",
+      "type": "leader_change",
+      "message": "Nuevo lider sectorial: XLE -> XLV"
     }
   ],
   "_alerts": {
     "phase_change": null,
-    "leader_change": null,
+    "leader_change": {
+      "from": "XLE",
+      "to": "XLV",
+      "previous_date": "2026-10-20"
+    },
     "divergence": null
   }
 }
