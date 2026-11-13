@@ -1885,6 +1885,19 @@
       },
       "growth": 0.07666224833919688,
       "stress": 0.11248569234622922
+    },
+    {
+      "date": "2026-11-13",
+      "phase_id": 2,
+      "phase_code": "RECALENTAMIENTO",
+      "probabilities": {
+        "1": 0.22138334988752542,
+        "2": 0.33937564883532056,
+        "3": 0.26049427888597365,
+        "4": 0.1787467223911803
+      },
+      "growth": 0.07584908227842087,
+      "stress": 0.1283607469199332
     }
   ],
   "leader_timeline": [
@@ -2757,6 +2770,12 @@
       "leader": "XLV",
       "leader_score": 89.61,
       "runner_up": "XLP"
+    },
+    {
+      "date": "2026-11-13",
+      "leader": "XLV",
+      "leader_score": 89.16,
+      "runner_up": "XLP"
     }
   ],
   "sentiment_timeline": [
@@ -3627,6 +3646,12 @@
     {
       "date": "2026-11-12",
       "sentiment": -0.108,
+      "label": "Neutral",
+      "divergence": null
+    },
+    {
+      "date": "2026-11-13",
+      "sentiment": -0.099,
       "label": "Neutral",
       "divergence": null
     }
