@@ -1963,6 +1963,19 @@
       },
       "growth": 0.07012405394290176,
       "stress": 0.25123652354395126
+    },
+    {
+      "date": "2026-11-20",
+      "phase_id": 2,
+      "phase_code": "RECALENTAMIENTO",
+      "probabilities": {
+        "1": 0.14250907369725405,
+        "2": 0.42499848995079853,
+        "3": 0.3132861974954397,
+        "4": 0.11920623885650784
+      },
+      "growth": 0.07482824475351023,
+      "stress": 0.3407271351451964
     }
   ],
   "leader_timeline": [
@@ -2871,6 +2884,12 @@
       "leader": "XLV",
       "leader_score": 87.24,
       "runner_up": "XLP"
+    },
+    {
+      "date": "2026-11-20",
+      "leader": "XLP",
+      "leader_score": 87.64,
+      "runner_up": "XLV"
     }
   ],
   "sentiment_timeline": [
@@ -3779,6 +3798,12 @@
       "sentiment": -0.337,
       "label": "Risk-Off",
       "divergence": null
+    },
+    {
+      "date": "2026-11-20",
+      "sentiment": -0.599,
+      "label": "Risk-Off",
+      "divergence": "macro_better"
     }
   ],
   "events": [
@@ -3901,11 +3926,25 @@
       "date": "2026-11-05",
       "type": "leader_change",
       "message": "Nuevo lider sectorial: XLE -> XLV"
+    },
+    {
+      "date": "2026-11-20",
+      "type": "leader_change",
+      "message": "Nuevo lider sectorial: XLV -> XLP"
+    },
+    {
+      "date": "2026-11-20",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (macro_better)"
     }
   ],
   "_alerts": {
     "phase_change": null,
-    "leader_change": null,
-    "divergence": null
+    "leader_change": {
+      "from": "XLV",
+      "to": "XLP",
+      "previous_date": "2026-11-19"
+    },
+    "divergence": "macro_better"
   }
 }
