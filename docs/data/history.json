@@ -1989,6 +1989,19 @@
       },
       "growth": 0.08156218915414552,
       "stress": 0.37581544476863127
+    },
+    {
+      "date": "2026-11-24",
+      "phase_id": 3,
+      "phase_code": "CONTRACCION",
+      "probabilities": {
+        "1": 0.12119470998512596,
+        "2": 0.32612850797536497,
+        "3": 0.41351106940929483,
+        "4": 0.1391657126302141
+      },
+      "growth": -0.05808300935570797,
+      "stress": 0.3447032751587801
     }
   ],
   "leader_timeline": [
@@ -2908,6 +2921,12 @@
       "date": "2026-11-21",
       "leader": "XLV",
       "leader_score": 87.76,
+      "runner_up": "XLP"
+    },
+    {
+      "date": "2026-11-24",
+      "leader": "XLV",
+      "leader_score": 91.47,
       "runner_up": "XLP"
     }
   ],
@@ -3829,6 +3848,12 @@
       "sentiment": -0.619,
       "label": "Risk-Off",
       "divergence": "macro_better"
+    },
+    {
+      "date": "2026-11-24",
+      "sentiment": -0.627,
+      "label": "Risk-Off",
+      "divergence": "macro_better"
     }
   ],
   "events": [
@@ -3971,15 +3996,16 @@
       "date": "2026-11-21",
       "type": "divergence",
       "message": "Divergencia macro/mercado detectada (macro_better)"
+    },
+    {
+      "date": "2026-11-24",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (macro_better)"
     }
   ],
   "_alerts": {
     "phase_change": null,
-    "leader_change": {
-      "from": "XLP",
-      "to": "XLV",
-      "previous_date": "2026-11-20"
-    },
+    "leader_change": null,
     "divergence": "macro_better"
   }
 }
