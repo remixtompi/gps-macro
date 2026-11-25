@@ -2002,6 +2002,19 @@
       },
       "growth": -0.06045684131974767,
       "stress": 0.3112979314224748
+    },
+    {
+      "date": "2026-11-25",
+      "phase_id": 3,
+      "phase_code": "CONTRACCION",
+      "probabilities": {
+        "1": 0.11968822533178718,
+        "2": 0.3261997353072712,
+        "3": 0.4162953806569461,
+        "4": 0.1378166587039955
+      },
+      "growth": -0.05948438843787485,
+      "stress": 0.3499915525569314
     }
   ],
   "leader_timeline": [
@@ -2927,6 +2940,12 @@
       "date": "2026-11-24",
       "leader": "XLV",
       "leader_score": 91.47,
+      "runner_up": "XLP"
+    },
+    {
+      "date": "2026-11-25",
+      "leader": "XLV",
+      "leader_score": 93.7,
       "runner_up": "XLP"
     }
   ],
@@ -3854,6 +3873,12 @@
       "sentiment": -0.627,
       "label": "Risk-Off",
       "divergence": "macro_better"
+    },
+    {
+      "date": "2026-11-25",
+      "sentiment": -0.635,
+      "label": "Risk-Off",
+      "divergence": "macro_better"
     }
   ],
   "events": [
@@ -3999,6 +4024,11 @@
     },
     {
       "date": "2026-11-24",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (macro_better)"
+    },
+    {
+      "date": "2026-11-25",
       "type": "divergence",
       "message": "Divergencia macro/mercado detectada (macro_better)"
     }
