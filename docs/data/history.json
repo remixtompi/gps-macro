@@ -2028,6 +2028,19 @@
       },
       "growth": -0.0686754008988875,
       "stress": 0.3955437792621056
+    },
+    {
+      "date": "2026-11-27",
+      "phase_id": 3,
+      "phase_code": "CONTRACCION",
+      "probabilities": {
+        "1": 0.11172720102169034,
+        "2": 0.3248826093312734,
+        "3": 0.43237507191367686,
+        "4": 0.13101511773335933
+      },
+      "growth": -0.06861622283745956,
+      "stress": 0.3781160420419849
     }
   ],
   "leader_timeline": [
@@ -2963,6 +2976,12 @@
     },
     {
       "date": "2026-11-26",
+      "leader": "XLV",
+      "leader_score": 93.67,
+      "runner_up": "XLP"
+    },
+    {
+      "date": "2026-11-27",
       "leader": "XLV",
       "leader_score": 93.67,
       "runner_up": "XLP"
@@ -3904,14 +3923,15 @@
       "sentiment": -0.613,
       "label": "Risk-Off",
       "divergence": "macro_better"
+    },
+    {
+      "date": "2026-11-27",
+      "sentiment": -0.613,
+      "label": "Risk-Off",
+      "divergence": "macro_better"
     }
   ],
   "events": [
-    {
-      "date": "2026-07-07",
-      "type": "divergence",
-      "message": "Divergencia macro/mercado detectada (market_better)"
-    },
     {
       "date": "2026-07-08",
       "type": "divergence",
@@ -4054,6 +4074,11 @@
     },
     {
       "date": "2026-11-26",
+      "type": "divergence",
+      "message": "Divergencia macro/mercado detectada (macro_better)"
+    },
+    {
+      "date": "2026-11-27",
       "type": "divergence",
       "message": "Divergencia macro/mercado detectada (macro_better)"
     }
